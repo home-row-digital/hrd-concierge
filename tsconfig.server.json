@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": ".",
+    "strict": false,
+    "declaration": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "noEmit": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true
+  },
+  "include": ["server.ts", "src/**/*.ts"],
+  "exclude": ["node_modules", ".next"]
+}
