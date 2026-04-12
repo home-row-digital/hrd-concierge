@@ -2,6 +2,9 @@ import { CollectionConfig } from 'payload';
 
 export const OptInMethods: CollectionConfig = {
   slug: 'optin-methods',
+  admin: {
+    group: 'Compliance & Legal',
+  },
   fields: [
     {
       name: 'campaign',

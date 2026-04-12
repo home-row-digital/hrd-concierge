@@ -1,7 +1,10 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig } from 'payload';
 
 export const Media: CollectionConfig = {
   slug: 'media',
+  admin: {
+    group: 'Operations & Billing',
+  },
   access: {
     read: () => true,
   },
@@ -13,4 +16,4 @@ export const Media: CollectionConfig = {
     },
   ],
   upload: true,
-}
+};

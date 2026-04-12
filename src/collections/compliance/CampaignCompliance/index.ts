@@ -2,11 +2,14 @@ import { CollectionConfig } from 'payload';
 
 export const CampaignCompliance: CollectionConfig = {
   slug: 'campaign-compliance',
+  admin: {
+    group: 'Compliance & Legal',
+  },
   fields: [
     {
       name: 'campaign',
       type: 'relationship',
-      relationTo: 'campaign',
+      relationTo: 'campaigns',
     },
     {
       name: 'tcrCampaignSid',

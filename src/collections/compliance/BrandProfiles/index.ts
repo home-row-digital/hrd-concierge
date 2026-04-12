@@ -6,6 +6,7 @@ export const BrandProfiles: CollectionConfig = {
   admin: {
     useAsTitle: 'legalBusinessName',
     defaultColumns: ['legalBusinessName', 'websiteUrl'],
+    group: 'Compliance & Legal',
   },
   fields: [
     {

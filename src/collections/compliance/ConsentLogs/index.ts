@@ -5,6 +5,7 @@ export const ConsentLogs: CollectionConfig = {
   admin: {
     useAsTitle: 'phoneNumber',
     defaultColumns: ['phoneNumber', 'type'],
+    group: 'Compliance & Legal',
   },
   fields: [
     {
@@ -45,7 +46,7 @@ export const ConsentLogs: CollectionConfig = {
     {
       name: 'brand',
       type: 'relationship',
-      relationTo: 'brand',
+      relationTo: 'brands',
       admin: {
         position: 'sidebar',
       },

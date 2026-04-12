@@ -67,6 +67,29 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    'provider-configs': ProviderConfig;
+    'sms-logs': SmsLog;
+    'twilio-numbers': TwilioNumber;
+    'voice-logs': VoiceLog;
+    'brand-profiles': BrandProfile;
+    'campaign-compliance': CampaignCompliance;
+    'consent-logs': ConsentLog;
+    'optin-methods': OptinMethod;
+    'brand-metrics': BrandMetric;
+    contracts: Contract;
+    'sms-consent': SmsConsent;
+    campaigns: Campaign;
+    brands: Brand;
+    leads: Lead;
+    'lead-conversation': LeadConversation;
+    'lead-media': LeadMedia;
+    'lead-locations': LeadLocation;
+    'nurture-state': NurtureState;
+    'lead-activity': LeadActivity;
+    invoices: Invoice;
+    'rate-cards': RateCard;
+    subscriptions: Subscription;
+    'usage-events': UsageEvent;
     users: User;
     media: Media;
     'payload-kv': PayloadKv;
@@ -76,6 +99,29 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    'provider-configs': ProviderConfigsSelect<false> | ProviderConfigsSelect<true>;
+    'sms-logs': SmsLogsSelect<false> | SmsLogsSelect<true>;
+    'twilio-numbers': TwilioNumbersSelect<false> | TwilioNumbersSelect<true>;
+    'voice-logs': VoiceLogsSelect<false> | VoiceLogsSelect<true>;
+    'brand-profiles': BrandProfilesSelect<false> | BrandProfilesSelect<true>;
+    'campaign-compliance': CampaignComplianceSelect<false> | CampaignComplianceSelect<true>;
+    'consent-logs': ConsentLogsSelect<false> | ConsentLogsSelect<true>;
+    'optin-methods': OptinMethodsSelect<false> | OptinMethodsSelect<true>;
+    'brand-metrics': BrandMetricsSelect<false> | BrandMetricsSelect<true>;
+    contracts: ContractsSelect<false> | ContractsSelect<true>;
+    'sms-consent': SmsConsentSelect<false> | SmsConsentSelect<true>;
+    campaigns: CampaignsSelect<false> | CampaignsSelect<true>;
+    brands: BrandsSelect<false> | BrandsSelect<true>;
+    leads: LeadsSelect<false> | LeadsSelect<true>;
+    'lead-conversation': LeadConversationSelect<false> | LeadConversationSelect<true>;
+    'lead-media': LeadMediaSelect<false> | LeadMediaSelect<true>;
+    'lead-locations': LeadLocationsSelect<false> | LeadLocationsSelect<true>;
+    'nurture-state': NurtureStateSelect<false> | NurtureStateSelect<true>;
+    'lead-activity': LeadActivitySelect<false> | LeadActivitySelect<true>;
+    invoices: InvoicesSelect<false> | InvoicesSelect<true>;
+    'rate-cards': RateCardsSelect<false> | RateCardsSelect<true>;
+    subscriptions: SubscriptionsSelect<false> | SubscriptionsSelect<true>;
+    'usage-events': UsageEventsSelect<false> | UsageEventsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -119,28 +165,209 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
+ * via the `definition` "provider-configs".
  */
-export interface User {
+export interface ProviderConfig {
   id: number;
+  brand: number | Brand;
+  twilioSubAccountSid: string;
+  twilioAuthToken?: string | null;
+  gcpProjectId: string;
+  gcpProjectNumber?: string | null;
+  gcpServiceAccountEmail?: string | null;
+  gcpProjectStatus?: ('PROVISIONING' | 'ACTIVE' | 'SUSPENDED' | 'ERROR') | null;
+  gcpSpendBudgetCap?: number | null;
+  gcpQuotaTier?: ('HIGH' | 'LOW') | null;
   updatedAt: string;
   createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brands".
+ */
+export interface Brand {
+  id: number;
+  /**
+   * URL-friendly unique slug for brand
+   */
+  slug: string;
+  brandName: string;
+  registeredPhone: string;
+  supportEmail: string;
+  healthStatus?: ('Healthy' | 'Warning' | 'Suspended' | 'Banned' | 'Pending') | null;
+  /**
+   * IF CHECKED, ALL API ACTIVITY FOR BRAND IS HALTED. Prevents spam/abuse and compromised API credentials
+   */
+  emergencyHalt?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sms-logs".
+ */
+export interface SmsLog {
+  id: number;
+  messageSid: string;
+  direction?: ('INBOUND' | 'OUTBOUND_API') | null;
+  from: string;
+  to: string;
+  segments?: number | null;
+  totalCost?: number | null;
+  body?: string | null;
+  status?: ('QUEUED' | 'SENT' | 'DELIVERED' | 'FAILED' | 'UNDELIVERABLE') | null;
+  campaign?: (number | null) | Campaign;
+  sent_at?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "campaigns".
+ */
+export interface Campaign {
+  id: number;
+  campaignName: string;
+  tcrCampaignSid: string;
+  campaignStatus: 'ACTIVE' | 'IN_REVIEW' | 'VERIFIED' | 'FAILED' | 'SUSPENDED' | 'EXPIRED';
+  messagingServiceId: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "twilio-numbers".
+ */
+export interface TwilioNumber {
+  id: number;
+  /**
+   * E.164 (e.g.: "+15551234567")
+   */
+  phoneNumber: string;
+  twilioNumberSid: string;
+  campaign?: (number | null) | Campaign;
+  status: 'ACTIVE' | 'PENDING_TRANSFER' | 'RELEASED';
+  capabilities?: ('SMS' | 'MMS' | 'VOICE')[] | null;
+  label: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "voice-logs".
+ */
+export interface VoiceLog {
+  id: number;
+  callSid: string;
+  direction?: ('INBOUND' | 'OUTBOUND_API') | null;
+  from?: string | null;
+  to?: string | null;
+  callType?: ('AI_ASSISTANT' | 'HUMAN_TO_HUMAN') | null;
+  status?: ('RINGING' | 'IN_PROGRESS' | 'COMPLETED' | 'BUSY' | 'FAILED') | null;
+  /**
+   * Call duration in seconds
+   */
+  duration?: number | null;
+  usageCost?: number | null;
+  campaign?: (number | null) | Campaign;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brand-profiles".
+ */
+export interface BrandProfile {
+  id: number;
+  brand?: (number | null) | Brand;
+  legalBusinessName: string;
+  /**
+   * Exactly as shown on the CP-575 or 147C form
+   */
+  taxId: string;
+  entityType: 'PRIVATE_PROFIT' | 'PUBLIC_PROFIT' | 'LLC' | 'PARTNERSHIP' | 'SOLE_PROP' | 'NON_PROFIT' | 'GOVERNMENT';
+  vertical:
+    | 'AUTOMOTIVE'
+    | 'AGRICULTURE'
+    | 'COMMUNICATION'
+    | 'CONSTRUCTION'
+    | 'EDUCATION'
+    | 'ENERGY'
+    | 'ENTERTAINMENT'
+    | 'FINANCIAL'
+    | 'GAMBLING'
+    | 'HEALTHCARE'
+    | 'HOSPITALITY'
+    | 'MANUFACTURING'
+    | 'PROFESSIONAL'
+    | 'REAL_ESTATE'
+    | 'RETAIL'
+    | 'TECHNOLOGY'
+    | 'TRANSPORTATION'
+    | 'POLITICAL';
+  /**
+   * Exactly as shown on IRS form
+   */
+  streetAddress: string;
+  city: string;
+  state: string;
+  zip: string;
+  websiteUrl?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "campaign-compliance".
+ */
+export interface CampaignCompliance {
+  id: number;
+  campaign?: (number | null) | Campaign;
+  tcrCampaignSid: string;
+  messagingServiceId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "consent-logs".
+ */
+export interface ConsentLog {
+  id: number;
+  phoneNumber: string;
+  type: 'OPT_IN' | 'OPT_OUT';
+  source: 'SMS_KEYWORD' | 'WEB_FORM' | 'MANUAL_ADMIN' | 'API_IMPORT';
+  consentDate?: string | null;
+  /**
+   * The exact message body
+   */
+  rawTextSnapshot: string;
+  metadata?:
     | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
     | null;
-  password?: string | null;
-  collection: 'users';
+  brand?: (number | null) | Brand;
+  proof?: (number | null) | SmsLog;
+  lookupKey: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "optin-methods".
+ */
+export interface OptinMethod {
+  id: number;
+  campaign?: (number | null) | Campaign;
+  type?: ('WEB' | 'KEYWORD' | 'VERBAL' | 'PAPER_FORM') | null;
+  proof?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -160,6 +387,374 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brand-metrics".
+ */
+export interface BrandMetric {
+  id: number;
+  brand: number | Brand;
+  tcrBrandId: string;
+  tcrBrandScore: string;
+  brandStatus?:
+    | ('PENDING' | 'APPROVED' | 'VETTING_IN_PROGRESS' | 'FAILED' | 'IN_REVIEW' | 'SUSPENDED' | 'EXPIRED' | 'DELETED')
+    | null;
+  trustScore?: number | null;
+  vettingClass?: number | null;
+  optOutRate?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contracts".
+ */
+export interface Contract {
+  id: number;
+  contractType?: ('MSA' | 'DPA' | 'BAA' | 'ADDENDUM') | null;
+  status?: ('DRAFT' | 'SENT' | 'SIGNED' | 'EXPIRED' | 'VOIDED') | null;
+  signedDate?: string | null;
+  signedByIp?: string | null;
+  signatureProvider?: ('DOCUSIGN' | 'PANDADOC' | 'INTERNAL') | null;
+  envelopeId?: string | null;
+  isPrimary?: boolean | null;
+  fileAttachment?: (number | null) | Media;
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  brand?: (number | null) | Brand;
+  rateCard?: (number | null) | RateCard;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "rate-cards".
+ */
+export interface RateCard {
+  id: number;
+  /**
+   * Unique name (e.g., "2026 Enterprise Tier")
+   */
+  name: string;
+  /**
+   * For automatic provisioning.
+   */
+  isDefault?: boolean | null;
+  /**
+   * Charge: Monthly subscription fee
+   */
+  baseMonthly: number;
+  /**
+   * Voice minutes per month
+   */
+  includedMinutes: number;
+  /**
+   * SMS segments per month
+   */
+  includedSMS: number;
+  /**
+   * AI Tokens per month
+   */
+  includedAITokens: number;
+  /**
+   * Charge: What customer pays after quota
+   */
+  overageRateMin: number;
+  /**
+   * Cost: What Twilio/Carrier charges US
+   */
+  costPerMin: number;
+  /**
+   * Charge: What customer pays after quota
+   */
+  overageRateSMS: number;
+  /**
+   * Cost: What Twilio/Carrier charges US
+   */
+  costPerSMS: number;
+  /**
+   * Charge: Customer price per 1k tokens.
+   */
+  aiTokenRate: number;
+  /**
+   * Cost: What Google/AI provider charges US
+   */
+  costPerToken: number;
+  /**
+   * Charge: Price for post-call processing
+   */
+  transcriptRate: number;
+  /**
+   * Charge: Storage fee for audio
+   */
+  recordingRate: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sms-consent".
+ */
+export interface SmsConsent {
+  id: number;
+  smsLog: number | SmsLog;
+  body: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads".
+ */
+export interface Lead {
+  id: number;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email?: string | null;
+  status?: ('LEAD' | 'CUSTOMER' | 'ARCHIVED') | null;
+  subStatus?: ('NEW' | 'APPT_SET' | 'JOB_IN_PROGRESS' | 'COMPLETED') | null;
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  brand: number | Brand;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lead-conversation".
+ */
+export interface LeadConversation {
+  id: number;
+  lead?: (number | null) | Lead;
+  brand?: (number | null) | Brand;
+  /**
+   * AI-updated TL;DR of the chat so far
+   */
+  summary?: string | null;
+  lastIntent?: string | null;
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lead-media".
+ */
+export interface LeadMedia {
+  id: number;
+  lead: number | Lead;
+  location: number | LeadLocation;
+  category?: ('PRE_SERVICE' | 'POST_SERVICE' | 'CONTRACT' | 'DAMAGE_DETAIL') | null;
+  aiAnalysis?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lead-locations".
+ */
+export interface LeadLocation {
+  id: number;
+  lead: number | Lead;
+  brand: number | Brand;
+  streetAddress: string;
+  city: string;
+  state: string;
+  zip: string;
+  locationType: 'PRIMARY' | 'RENTAL' | 'BILLING';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "nurture-state".
+ */
+export interface NurtureState {
+  id: number;
+  lead?: (number | null) | Lead;
+  /**
+   * AI-written current situation snapshot
+   */
+  lastSummary?: string | null;
+  nextStep?: string | null;
+  objections?:
+    | {
+        objection?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lead-activity".
+ */
+export interface LeadActivity {
+  id: number;
+  lead?: (number | null) | Lead;
+  type?: ('INBOUND_SMS' | 'OUTBOUND_SMS' | 'PHOTO_UPLOAD' | 'CALL' | 'STATUS_CHANGE') | null;
+  description: string;
+  /**
+   * The ID of the specific document being referenced
+   */
+  referenceId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invoices".
+ */
+export interface Invoice {
+  id: number;
+  /**
+   * Keeps the link to the owner.
+   */
+  brand: number | Brand;
+  /**
+   * Unique ID for accounting
+   */
+  invoiceNumber: string;
+  billingPeriod: {
+    start: string;
+    end: string;
+  };
+  /**
+   * Store the final counts (e.g., 502 mins, 1000 sms) so you don't need the Ledger
+   */
+  usageSnapshot:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Base Fee (in cents)
+   */
+  subtotal: number;
+  /**
+   * Total overages (in cents)
+   */
+  overageAmount: number;
+  /**
+   * The final sum (Base + Overages + Fines)
+   */
+  totalAmount: number;
+  paymentStatus: 'UNPAID' | 'PAID' | 'VOID' | 'REFUNDED';
+  /**
+   * Index this. Essential for webhook lookups
+   */
+  stripeInvoiceId?: string | null;
+  /**
+   * Direct link to Stripe's hosted PDF
+   */
+  stripeInvoiceUrl?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscriptions".
+ */
+export interface Subscription {
+  id: number;
+  /**
+   * Who owns this?
+   */
+  brand: number | Brand;
+  /**
+   * The Link: Which prices do we use?
+   */
+  rateCard: number | RateCard;
+  status: 'ACTIVE' | 'PAST_DUE' | 'CANCELED';
+  /**
+   * When do the "Included Quotas" reset?
+   */
+  currentPeriodEnd: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "usage-events".
+ */
+export interface UsageEvent {
+  id: number;
+  operationType?: ('SMS' | 'VOICE' | 'AI_TOKEN') | null;
+  /**
+   * The Twilio SID of the even (messageSid or callSid)
+   */
+  eventRef?: string | null;
+  brandId?: string | null;
+  rawQuantity?: number | null;
+  unitPrice?: number | null;
+  totalCents?: number | null;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  role?: ('ADMIN' | 'BRAND_MANAGER') | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -185,6 +780,98 @@ export interface PayloadKv {
 export interface PayloadLockedDocument {
   id: number;
   document?:
+    | ({
+        relationTo: 'provider-configs';
+        value: number | ProviderConfig;
+      } | null)
+    | ({
+        relationTo: 'sms-logs';
+        value: number | SmsLog;
+      } | null)
+    | ({
+        relationTo: 'twilio-numbers';
+        value: number | TwilioNumber;
+      } | null)
+    | ({
+        relationTo: 'voice-logs';
+        value: number | VoiceLog;
+      } | null)
+    | ({
+        relationTo: 'brand-profiles';
+        value: number | BrandProfile;
+      } | null)
+    | ({
+        relationTo: 'campaign-compliance';
+        value: number | CampaignCompliance;
+      } | null)
+    | ({
+        relationTo: 'consent-logs';
+        value: number | ConsentLog;
+      } | null)
+    | ({
+        relationTo: 'optin-methods';
+        value: number | OptinMethod;
+      } | null)
+    | ({
+        relationTo: 'brand-metrics';
+        value: number | BrandMetric;
+      } | null)
+    | ({
+        relationTo: 'contracts';
+        value: number | Contract;
+      } | null)
+    | ({
+        relationTo: 'sms-consent';
+        value: number | SmsConsent;
+      } | null)
+    | ({
+        relationTo: 'campaigns';
+        value: number | Campaign;
+      } | null)
+    | ({
+        relationTo: 'brands';
+        value: number | Brand;
+      } | null)
+    | ({
+        relationTo: 'leads';
+        value: number | Lead;
+      } | null)
+    | ({
+        relationTo: 'lead-conversation';
+        value: number | LeadConversation;
+      } | null)
+    | ({
+        relationTo: 'lead-media';
+        value: number | LeadMedia;
+      } | null)
+    | ({
+        relationTo: 'lead-locations';
+        value: number | LeadLocation;
+      } | null)
+    | ({
+        relationTo: 'nurture-state';
+        value: number | NurtureState;
+      } | null)
+    | ({
+        relationTo: 'lead-activity';
+        value: number | LeadActivity;
+      } | null)
+    | ({
+        relationTo: 'invoices';
+        value: number | Invoice;
+      } | null)
+    | ({
+        relationTo: 'rate-cards';
+        value: number | RateCard;
+      } | null)
+    | ({
+        relationTo: 'subscriptions';
+        value: number | Subscription;
+      } | null)
+    | ({
+        relationTo: 'usage-events';
+        value: number | UsageEvent;
+      } | null)
     | ({
         relationTo: 'users';
         value: number | User;
@@ -237,9 +924,369 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "provider-configs_select".
+ */
+export interface ProviderConfigsSelect<T extends boolean = true> {
+  brand?: T;
+  twilioSubAccountSid?: T;
+  twilioAuthToken?: T;
+  gcpProjectId?: T;
+  gcpProjectNumber?: T;
+  gcpServiceAccountEmail?: T;
+  gcpProjectStatus?: T;
+  gcpSpendBudgetCap?: T;
+  gcpQuotaTier?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sms-logs_select".
+ */
+export interface SmsLogsSelect<T extends boolean = true> {
+  messageSid?: T;
+  direction?: T;
+  from?: T;
+  to?: T;
+  segments?: T;
+  totalCost?: T;
+  body?: T;
+  status?: T;
+  campaign?: T;
+  sent_at?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "twilio-numbers_select".
+ */
+export interface TwilioNumbersSelect<T extends boolean = true> {
+  phoneNumber?: T;
+  twilioNumberSid?: T;
+  campaign?: T;
+  status?: T;
+  capabilities?: T;
+  label?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "voice-logs_select".
+ */
+export interface VoiceLogsSelect<T extends boolean = true> {
+  callSid?: T;
+  direction?: T;
+  from?: T;
+  to?: T;
+  callType?: T;
+  status?: T;
+  duration?: T;
+  usageCost?: T;
+  campaign?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brand-profiles_select".
+ */
+export interface BrandProfilesSelect<T extends boolean = true> {
+  brand?: T;
+  legalBusinessName?: T;
+  taxId?: T;
+  entityType?: T;
+  vertical?: T;
+  streetAddress?: T;
+  city?: T;
+  state?: T;
+  zip?: T;
+  websiteUrl?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "campaign-compliance_select".
+ */
+export interface CampaignComplianceSelect<T extends boolean = true> {
+  campaign?: T;
+  tcrCampaignSid?: T;
+  messagingServiceId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "consent-logs_select".
+ */
+export interface ConsentLogsSelect<T extends boolean = true> {
+  phoneNumber?: T;
+  type?: T;
+  source?: T;
+  consentDate?: T;
+  rawTextSnapshot?: T;
+  metadata?: T;
+  brand?: T;
+  proof?: T;
+  lookupKey?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "optin-methods_select".
+ */
+export interface OptinMethodsSelect<T extends boolean = true> {
+  campaign?: T;
+  type?: T;
+  proof?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brand-metrics_select".
+ */
+export interface BrandMetricsSelect<T extends boolean = true> {
+  brand?: T;
+  tcrBrandId?: T;
+  tcrBrandScore?: T;
+  brandStatus?: T;
+  trustScore?: T;
+  vettingClass?: T;
+  optOutRate?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contracts_select".
+ */
+export interface ContractsSelect<T extends boolean = true> {
+  contractType?: T;
+  status?: T;
+  signedDate?: T;
+  signedByIp?: T;
+  signatureProvider?: T;
+  envelopeId?: T;
+  isPrimary?: T;
+  fileAttachment?: T;
+  metadata?: T;
+  brand?: T;
+  rateCard?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sms-consent_select".
+ */
+export interface SmsConsentSelect<T extends boolean = true> {
+  smsLog?: T;
+  body?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "campaigns_select".
+ */
+export interface CampaignsSelect<T extends boolean = true> {
+  campaignName?: T;
+  tcrCampaignSid?: T;
+  campaignStatus?: T;
+  messagingServiceId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brands_select".
+ */
+export interface BrandsSelect<T extends boolean = true> {
+  slug?: T;
+  brandName?: T;
+  registeredPhone?: T;
+  supportEmail?: T;
+  healthStatus?: T;
+  emergencyHalt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads_select".
+ */
+export interface LeadsSelect<T extends boolean = true> {
+  firstName?: T;
+  lastName?: T;
+  phoneNumber?: T;
+  email?: T;
+  status?: T;
+  subStatus?: T;
+  metadata?: T;
+  brand?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lead-conversation_select".
+ */
+export interface LeadConversationSelect<T extends boolean = true> {
+  lead?: T;
+  brand?: T;
+  summary?: T;
+  lastIntent?: T;
+  meta?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lead-media_select".
+ */
+export interface LeadMediaSelect<T extends boolean = true> {
+  lead?: T;
+  location?: T;
+  category?: T;
+  aiAnalysis?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lead-locations_select".
+ */
+export interface LeadLocationsSelect<T extends boolean = true> {
+  lead?: T;
+  brand?: T;
+  streetAddress?: T;
+  city?: T;
+  state?: T;
+  zip?: T;
+  locationType?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "nurture-state_select".
+ */
+export interface NurtureStateSelect<T extends boolean = true> {
+  lead?: T;
+  lastSummary?: T;
+  nextStep?: T;
+  objections?:
+    | T
+    | {
+        objection?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lead-activity_select".
+ */
+export interface LeadActivitySelect<T extends boolean = true> {
+  lead?: T;
+  type?: T;
+  description?: T;
+  referenceId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "invoices_select".
+ */
+export interface InvoicesSelect<T extends boolean = true> {
+  brand?: T;
+  invoiceNumber?: T;
+  billingPeriod?:
+    | T
+    | {
+        start?: T;
+        end?: T;
+      };
+  usageSnapshot?: T;
+  subtotal?: T;
+  overageAmount?: T;
+  totalAmount?: T;
+  paymentStatus?: T;
+  stripeInvoiceId?: T;
+  stripeInvoiceUrl?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "rate-cards_select".
+ */
+export interface RateCardsSelect<T extends boolean = true> {
+  name?: T;
+  isDefault?: T;
+  baseMonthly?: T;
+  includedMinutes?: T;
+  includedSMS?: T;
+  includedAITokens?: T;
+  overageRateMin?: T;
+  costPerMin?: T;
+  overageRateSMS?: T;
+  costPerSMS?: T;
+  aiTokenRate?: T;
+  costPerToken?: T;
+  transcriptRate?: T;
+  recordingRate?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscriptions_select".
+ */
+export interface SubscriptionsSelect<T extends boolean = true> {
+  brand?: T;
+  rateCard?: T;
+  status?: T;
+  currentPeriodEnd?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "usage-events_select".
+ */
+export interface UsageEventsSelect<T extends boolean = true> {
+  operationType?: T;
+  eventRef?: T;
+  brandId?: T;
+  rawQuantity?: T;
+  unitPrice?: T;
+  totalCents?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
