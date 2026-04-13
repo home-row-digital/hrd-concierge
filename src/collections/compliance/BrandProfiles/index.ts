@@ -13,6 +13,7 @@ export const BrandProfiles: CollectionConfig = {
       name: 'brand',
       type: 'relationship',
       relationTo: 'brands',
+      required: true,
       admin: {
         position: 'sidebar',
       },

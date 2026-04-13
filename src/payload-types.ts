@@ -279,7 +279,7 @@ export interface VoiceLog {
  */
 export interface BrandProfile {
   id: number;
-  brand?: (number | null) | Brand;
+  brand: number | Brand;
   legalBusinessName: string;
   /**
    * Exactly as shown on the CP-575 or 147C form
