@@ -1,4 +1,4 @@
-import { TCR_BUSINESS_TYPES, TCR_VERTICALS } from '@/app/lib/constants/tcr';
+import { TCR_BUSINESS_TYPES, TCR_VERTICALS } from '@/lib/constants/tcr';
 import { CollectionConfig } from 'payload';
 
 export const BrandProfiles: CollectionConfig = {

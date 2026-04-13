@@ -14,12 +14,10 @@ export const Leads: CollectionConfig = {
         {
           name: 'firstName',
           type: 'text',
-          required: true,
         },
         {
           name: 'lastName',
           type: 'text',
-          required: true,
         },
       ],
     },
@@ -46,7 +44,7 @@ export const Leads: CollectionConfig = {
         {
           name: 'status',
           type: 'select',
-          options: ['LEAD', 'CUSTOMER', 'ARCHIVED'],
+          options: ['LEAD', 'CUSTOMER', 'ARCHIVED', 'OPTED_OUT'],
           defaultValue: 'LEAD',
         },
         {
@@ -69,6 +67,11 @@ export const Leads: CollectionConfig = {
       admin: {
         position: 'sidebar',
       },
+    },
+    {
+      name: 'doNotCall',
+      type: 'checkbox',
+      defaultValue: false,
     },
   ],
 };

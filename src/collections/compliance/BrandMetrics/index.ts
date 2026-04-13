@@ -1,4 +1,4 @@
-import { TCR_BRAND_STATUSES } from '@/app/lib/constants/tcr';
+import { TCR_BRAND_STATUSES } from '@/lib/constants/tcr';
 import { CollectionConfig } from 'payload';
 
 export const BrandMetrics: CollectionConfig = {

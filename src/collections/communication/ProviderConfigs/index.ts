@@ -35,6 +35,10 @@ export const ProviderConfigs: CollectionConfig = {
       type: 'text',
     },
     {
+      name: 'gcpApiKey',
+      type: 'text',
+    },
+    {
       name: 'gcpServiceAccountEmail',
       type: 'text',
     },

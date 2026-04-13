@@ -1,4 +1,4 @@
-import { TCR_CAMPAIGN_STATUSES } from '@/app/lib/constants/tcr';
+import { TCR_CAMPAIGN_STATUSES } from '@/lib/constants/tcr';
 import { CollectionConfig } from 'payload';
 
 export const Campaigns: CollectionConfig = {

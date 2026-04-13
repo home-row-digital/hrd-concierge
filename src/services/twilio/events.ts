@@ -38,6 +38,9 @@ export async function subscribeToAllEvents(sinkSid: string) {
     { type: 'com.twilio.messaging.message.undelivered' }, // Relay issues often show up here
 
     // --- VOICE ---
+    { type: 'com.twilio.voice.call.initiated' },
+    { type: 'com.twilio.voice.call.answered' },
+    { type: 'com.twilio.voice.call.recording-available' },
     { type: 'com.twilio.voice.call.completed' },
   ];
 

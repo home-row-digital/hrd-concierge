@@ -1,3 +1,4 @@
+import { AiInsightsCollections } from '../AiInsights';
 import { ProviderConfigs } from './ProviderConfigs';
 import { SmsLogs } from './SmsLogs';
 import { TwilioNumbers } from './TwilioNumbers';
