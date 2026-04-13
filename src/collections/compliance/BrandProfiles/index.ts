@@ -97,7 +97,6 @@ export const BrandProfiles: CollectionConfig = {
       fields: [
         {
           type: 'text',
-          required: true,
           unique: true,
           name: 'trustHubBundleSid',
         },
@@ -106,10 +105,15 @@ export const BrandProfiles: CollectionConfig = {
           required: true,
           name: 'trustHubStatus',
           options: ['draft', 'pending', 'approved', 'rejected'],
+          defaultValue: 'draft',
         },
         {
           type: 'date',
           name: 'lastVettingDate',
+        },
+        {
+          type: 'textarea',
+          name: 'complianceNotes',
         },
       ],
     },

@@ -313,6 +313,10 @@ export interface BrandProfile {
   state: string;
   zip: string;
   websiteUrl?: string | null;
+  trustHubBundleSid?: string | null;
+  trustHubStatus: 'draft' | 'pending' | 'approved' | 'rejected';
+  lastVettingDate?: string | null;
+  complianceNotes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -402,6 +406,8 @@ export interface BrandMetric {
     | null;
   trustScore?: number | null;
   vettingClass?: number | null;
+  tcrSubmissionSid: string;
+  vettingError?: string | null;
   optOutRate?: number | null;
   updatedAt: string;
   createdAt: string;
@@ -1003,6 +1009,10 @@ export interface BrandProfilesSelect<T extends boolean = true> {
   state?: T;
   zip?: T;
   websiteUrl?: T;
+  trustHubBundleSid?: T;
+  trustHubStatus?: T;
+  lastVettingDate?: T;
+  complianceNotes?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1056,6 +1066,8 @@ export interface BrandMetricsSelect<T extends boolean = true> {
   brandStatus?: T;
   trustScore?: T;
   vettingClass?: T;
+  tcrSubmissionSid?: T;
+  vettingError?: T;
   optOutRate?: T;
   updatedAt?: T;
   createdAt?: T;
