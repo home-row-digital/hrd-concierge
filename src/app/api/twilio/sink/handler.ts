@@ -111,7 +111,7 @@ export async function handleTwilioEvent(type: string, data: any, accountSid: str
     // --- OPT-OUTS & CONSENT ---
     case 'com.twilio.messaging.message.delivered':
       const body = data.body?.toUpperCase() || '';
-      const stopKeywords = ['STOP', 'QUIT', 'UNSUBSCRIBE', 'OPT OUT'];
+      const stopKeywords = ['STOP', 'QUIT', 'UNSUBSCRIBE', 'OPT OUT', 'END'];
 
       // If a stop keyword is detected, log it
       if (stopKeywords.some((keyword) => body.includes(keyword))) {
