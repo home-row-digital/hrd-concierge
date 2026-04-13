@@ -52,6 +52,16 @@ export const BrandMetrics: CollectionConfig = {
       },
     },
     {
+      name: 'tcrSubmissionSid',
+      type: 'text',
+      required: true,
+      unique: true,
+    },
+    {
+      name: 'vettingError',
+      type: 'text',
+    },
+    {
       name: 'optOutRate',
       type: 'number',
       label: 'Opt-Out Rate (Aggregated across campaigns)',

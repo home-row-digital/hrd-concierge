@@ -91,5 +91,27 @@ export const BrandProfiles: CollectionConfig = {
       type: 'text',
       label: 'Marketing Site URL',
     },
+    {
+      type: 'collapsible',
+      label: 'Trust Hub Data',
+      fields: [
+        {
+          type: 'text',
+          required: true,
+          unique: true,
+          name: 'trustHubBundleSid',
+        },
+        {
+          type: 'select',
+          required: true,
+          name: 'trustHubStatus',
+          options: ['draft', 'pending', 'approved', 'rejected'],
+        },
+        {
+          type: 'date',
+          name: 'lastVettingDate',
+        },
+      ],
+    },
   ],
 };
