@@ -1,5 +1,4 @@
 import { BasePayload, getPayload } from 'payload';
-// REMOVE: import config from '@payload-config';
 
 interface PayloadCache {
   client: BasePayload | null;
@@ -17,7 +16,7 @@ export async function getPayloadClient(): Promise<BasePayload> {
 
   if (!cachedPayload.promise) {
     cachedPayload.promise = (async () => {
-      const configModule = await import('@payload-config');
+      const configModule = await import('../../payload.config');
       const config = await configModule.default;
 
       return getPayload({ config });

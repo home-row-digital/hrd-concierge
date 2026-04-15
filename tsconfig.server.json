@@ -12,7 +12,11 @@
     "allowJs": true,
     "noEmit": false,
     "resolveJsonModule": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@payload-config": ["./src/payload.config.ts"]
+    }
   },
   "include": ["server.ts", "src/**/*.ts"],
   "exclude": ["node_modules", ".next"]

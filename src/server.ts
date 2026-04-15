@@ -37,6 +37,6 @@ app.prepare().then(async () => {
 
   const PORT = parseInt(process.env.PORT || '3000', 10);
   server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Production Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
   });
 });
