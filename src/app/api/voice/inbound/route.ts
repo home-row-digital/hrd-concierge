@@ -14,26 +14,15 @@ export async function POST(req: Request) {
 
     const payload = await getPayloadClient();
 
-    // Check if the call already exists
-    const existingCall = await payload.find({
-      collection: 'voice-logs',
-      where: { callSid: { equals: { callSid } } },
-    });
-    if (existingCall.docs.length > 0) {
-      return new NextResponse(null, { status: 200 });
-    }
-
-    // Get brand config and campaign
-    const [configQuery, numberDoc] = await Promise.all([
+    const [configQuery, existingCall] = await Promise.all([
       payload.find({
         collection: 'provider-configs',
         where: { twilioSubAccountSid: { equals: accountSid } },
         limit: 1,
       }),
       payload.find({
-        collection: 'twilio-numbers',
-        where: { phoneNumber: { equals: to } },
-        limit: 1,
+        collection: 'voice-logs',
+        where: { callSid: { equals: callSid } },
       }),
     ]);
 
@@ -47,65 +36,73 @@ export async function POST(req: Request) {
       return new NextResponse(response.toString(), { headers: { 'Content-Type': 'text/xml' } });
     }
 
-    // Fetch Persona and Lead
-    const [personaQuery, leadQuery] = await Promise.all([
-      payload.find({
-        collection: 'personas',
-        where: { brand: { equals: brandId } },
-        limit: 1,
-      }),
-      payload.find({
-        collection: 'leads',
-        where: { and: [{ brand: { equals: brandId } }, { phoneNumber: { equals: from } }] },
-        limit: 1,
-      }),
-    ]);
+    let voiceLogId;
 
-    let leadId = typeof leadQuery.docs[0] === 'object' ? leadQuery.docs[0].id : null;
-    if (!leadId) {
-      const newLead = await payload.create({
-        collection: 'leads',
+    if (existingCall.docs.length > 0) {
+      voiceLogId = existingCall.docs[0].id;
+    } else {
+      // New call; create log & lead
+      const voiceLog = await payload.create({
+        collection: 'voice-logs',
         data: {
-          brand: brandId,
-          phoneNumber: from,
-          status: 'LEAD',
-          subStatus: 'NEW',
+          callSid,
+          callType: 'AI_ASSISTANT',
+          status: 'IN_PROGRESS',
+          direction: 'INBOUND',
+          from,
+          to,
         },
       });
-      leadId = newLead.id;
+      voiceLogId = voiceLog.id;
+
+      const leadQuery = await payload.find({
+        collection: 'leads',
+        where: {
+          and: [{ brand: { equals: brandId } }, { phoneNumber: { equals: from } }],
+        },
+        limit: 1,
+      });
+
+      if (leadQuery.docs.length === 0) {
+        await payload.create({
+          collection: 'leads',
+          data: {
+            brand: brandId,
+            phoneNumber: from,
+            status: 'LEAD',
+            subStatus: 'NEW',
+          },
+        });
+      }
     }
 
-    const voiceLog = await payload.create({
-      collection: 'voice-logs',
-      data: {
-        callSid,
-        callType: 'AI_ASSISTANT',
-        status: 'IN_PROGRESS',
-        direction: 'INBOUND',
-        from,
-        to,
-      },
+    const personaQuery = await payload.find({
+      collection: 'personas',
+      where: { brand: { equals: brandId } },
+      limit: 1,
     });
+    const personaId = String(personaQuery.docs[0]?.id || '');
 
-    const response = new VoiceResponse();
     const host = req.headers.get('host');
-    const protocol = host?.includes('localhost') ? 'ws' : 'wss';
+    const isLocal = host?.includes('localhost') || host?.includes('127.0.0.1');
+    const protocol = isLocal ? 'ws' : 'wss';
     const wsUrl = `${protocol}://${host}/api/voice/stream`;
 
-    const connect = await response.connect();
-    const relay = connect.conversationRelay({
-      url: wsUrl,
-      welcomeGreeting: 'Hello!',
+    const response = new VoiceResponse();
+    const connect = response.connect();
+
+    const relay = connect.conversationRelay({ url: wsUrl });
+    relay.parameter({ name: 'personaId', value: String(personaId) });
+    relay.parameter({ name: 'voiceLogId', value: String(voiceLogId) });
+
+    return new NextResponse(response.toString(), {
+      headers: {
+        'Content-Type': 'text/xml',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      },
     });
-
-    // Pass parameters to the Stream
-    relay.parameter({ name: 'personaId', value: String(personaQuery.docs[0]?.id) });
-    relay.parameter({ name: 'voiceLogId', value: String(voiceLog.id) });
-
-    return new NextResponse(response.toString(), { headers: { 'Content-Type': 'text/xml' } });
   } catch (error) {
-    console.error('CRITICAL VOICE ERROR:', error);
-    return new NextResponse('<Response><Hangup/></Response>', {
+    return new NextResponse('<Response><Say>A system error occurred.</Say><Hangup/></Response>', {
       headers: { 'Content-Type': 'text/xml' },
     });
   }

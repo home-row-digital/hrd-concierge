@@ -3,6 +3,7 @@ import { parse } from 'node:url';
 import next from 'next';
 import { WebSocketServer } from 'ws';
 import { handleRelayConnection } from './services/twilio/relayHandler.js';
+import { validateRequest } from 'twilio/lib/webhooks/webhooks.js';
 import { getPayloadClient } from './services/payload/getPayloadClient.js';
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -22,6 +23,24 @@ app.prepare().then(async () => {
     const { pathname } = parse(req.url || '', true);
 
     if (pathname === '/api/voice/stream') {
+      // --- PRODUCTION SECURITY GATE ---
+      const signature = req.headers['x-twilio-signature'] as string;
+      const authToken = process.env.TWILIO_AUTH_TOKEN || '';
+
+      // Reconstruct URL for validation (Essential for proxies like Traefik/Coolify)
+      const protocol = req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+      const host = req.headers.host;
+      const fullUrl = `${protocol}://${host}${req.url}`;
+
+      const isValid = validateRequest(authToken, signature, fullUrl, {});
+
+      if (!isValid) {
+        console.error(`[AUTH ERROR] Invalid Twilio Signature on Upgrade. URL: ${fullUrl}`);
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+
       wss.handleUpgrade(req, socket, head, (ws) => {
         // Fix the TypeScript 'setKeepAlive' error by casting to any
         const s = socket as any;
@@ -30,8 +49,6 @@ app.prepare().then(async () => {
 
         handleRelayConnection(ws, payload);
       });
-    } else {
-      if (!dev) socket.destroy();
     }
   });
 

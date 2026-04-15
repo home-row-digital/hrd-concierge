@@ -1,4 +1,6 @@
 export async function handleRelayConnection(socket: any, payload: any) {
+  socket.on('error', (err: any) => console.error('WebSocket Error:', err));
+
   // session stores data for THIS specific call
   let session = {
     voiceLogId: null as string | null,
@@ -8,6 +10,10 @@ export async function handleRelayConnection(socket: any, payload: any) {
 
   socket.on('message', async (data: Buffer) => {
     try {
+      // Filter out Twilio KeepAlive empty strings
+      const rawData = data.toString();
+      if (!rawData.trim()) return;
+
       const msg = JSON.parse(data.toString());
 
       switch (msg.type) {
@@ -16,23 +22,34 @@ export async function handleRelayConnection(socket: any, payload: any) {
           session.voiceLogId = msg.customParameters?.voiceLogId;
           session.systemPrompt = msg.customParameters?.systemPrompt;
           console.log(`Relay Setup for Log ID: ${session.voiceLogId}`);
+
+          // CRITICAL: Send a token immediately to acknowledge setup
+          // This prevents the "8-second silence" before Twilio hangs up.
+          if (socket.readyState === 1) {
+            socket.send(
+              JSON.stringify({
+                type: 'text',
+                token: 'Connection established.', // KEY MUST BE 'token'
+                last: true,
+              }),
+            );
+          }
           break;
 
         case 'prompt':
-          // This is the User's speech turned into text (STT)
-          console.log(`🎤 User said: ${msg.voicePrompt}`);
+          console.log(`User said: ${msg.voicePrompt}`);
 
           // GENERATE RESPONSE: This is where you'd call OpenAI/Groq
           const aiResponse = 'I can hear you! Your voice is being processed by the new relay.';
 
           // SEND TEXT: Twilio turns this into speech (TTS)
-          socket.send(
-            JSON.stringify({
+          if (socket.readyState === 1) {
+            socket.send({
               type: 'text',
               token: aiResponse,
               last: true, // Tells Twilio the AI is finished speaking
-            }),
-          );
+            });
+          }
 
           // LOGGING: Save the conversation to the DB in the background
           if (session.voiceLogId) {
@@ -59,6 +76,10 @@ export async function handleRelayConnection(socket: any, payload: any) {
           console.log('User interrupted the AI.');
           // In a real app, you'd stop your LLM generation here.
           break;
+
+        // Handles internal Ping so it doesn't fall through
+        case 'ping':
+          socket.send(JSON.stringify({ type: 'pong' }));
       }
     } catch (err) {
       console.error('RELAY PROCESSING ERROR:', err);
