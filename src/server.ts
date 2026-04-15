@@ -27,10 +27,13 @@ app.prepare().then(async () => {
       const signature = req.headers['x-twilio-signature'] as string;
       const authToken = process.env.TWILIO_AUTH_TOKEN || '';
 
-      // Reconstruct URL for validation (Essential for proxies like Traefik/Coolify)
-      const protocol = req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+      // COOLIFY/HETZNER FIX:
+      // Even if the internal request looks like 'http',
+      // Twilio called 'https'. We MUST use 'https' for the signature to match.
       const host = req.headers.host;
-      const fullUrl = `${protocol}://${host}${req.url}`;
+      const fullUrl = `https://${host}${req.url}`;
+
+      console.log(`[DEBUG] Validating signature for URL: ${fullUrl}`);
 
       const isValid = validateRequest(authToken, signature, fullUrl, {});
 
