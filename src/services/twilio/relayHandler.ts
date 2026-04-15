@@ -12,7 +12,7 @@ export async function handleRelayConnection(socket: any, payload: any) {
     try {
       // Filter out Twilio KeepAlive empty strings
       const rawData = data.toString();
-      if (!rawData.trim()) return;
+      // if (!rawData.trim()) return;
 
       const msg = JSON.parse(data.toString());
 
@@ -25,15 +25,15 @@ export async function handleRelayConnection(socket: any, payload: any) {
 
           // CRITICAL: Send a token immediately to acknowledge setup
           // This prevents the "8-second silence" before Twilio hangs up.
-          if (socket.readyState === 1) {
-            socket.send(
-              JSON.stringify({
-                type: 'text',
-                token: 'Connection established.', // KEY MUST BE 'token'
-                last: true,
-              }),
-            );
-          }
+          // if (socket.readyState === 1) {
+          //   socket.send(
+          //     JSON.stringify({
+          //       type: 'text',
+          //       token: 'Connection established.', // KEY MUST BE 'token'
+          //       last: true,
+          //     }),
+          //   );
+          // }
           break;
 
         case 'prompt':
@@ -44,11 +44,13 @@ export async function handleRelayConnection(socket: any, payload: any) {
 
           // SEND TEXT: Twilio turns this into speech (TTS)
           if (socket.readyState === 1) {
-            socket.send({
-              type: 'text',
-              token: aiResponse,
-              last: true, // Tells Twilio the AI is finished speaking
-            });
+            socket.send(
+              JSON.stringify({
+                type: 'text',
+                token: aiResponse,
+                last: true, // Tells Twilio the AI is finished speaking
+              }),
+            );
           }
 
           // LOGGING: Save the conversation to the DB in the background

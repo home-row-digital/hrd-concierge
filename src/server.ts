@@ -23,7 +23,6 @@ app.prepare().then(async () => {
     const { pathname } = parse(req.url || '', true);
 
     if (pathname === '/api/voice/stream') {
-      // --- PRODUCTION SECURITY GATE ---
       const signature = req.headers['x-twilio-signature'] as string;
       const authToken = process.env.TWILIO_AUTH_TOKEN || '';
 
@@ -31,9 +30,11 @@ app.prepare().then(async () => {
       // Even if the internal request looks like 'http',
       // Twilio called 'https'. We MUST use 'https' for the signature to match.
       const host = req.headers.host;
-      const fullUrl = `https://${host}${req.url}`;
+      // const fullUrl = `https://${host}${req.url}`;
+      const fullUrl = `https://voice.homerowdigital.com${req.url}`;
 
       console.log(`[DEBUG] Validating signature for URL: ${fullUrl}`);
+      console.log('DEBUG: Signature received is:', signature);
 
       let isValid = validateRequest(authToken, signature, fullUrl, {});
 
