@@ -4,6 +4,12 @@ export async function handleRelayConnection(socket: any, payload: any) {
     turn: 1,
   };
 
+  const interval = setInterval(() => {
+    if (socket.readyState === 1) {
+      socket.send(JSON.stringify({ type: 'pong' }));
+    }
+  }, 2000);
+
   console.log('[RELAY] Socket connected.');
 
   socket.on('message', async (data: Buffer) => {
@@ -71,5 +77,8 @@ export async function handleRelayConnection(socket: any, payload: any) {
     }
   });
 
-  socket.on('close', (code: number) => console.log(`[RELAY] Closed: ${code}`));
+  socket.on('close', (code: number) => {
+    clearInterval(interval);
+    console.log(`[RELAY] Closed: ${code}`);
+  });
 }
