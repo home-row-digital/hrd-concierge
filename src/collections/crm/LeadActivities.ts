@@ -4,14 +4,13 @@ export const LeadActivity: CollectionConfig = {
   slug: 'lead-activity',
   admin: {
     group: 'CRM & Execution',
-    hidden: true,
+    // hidden: true,
   },
   fields: [
     {
       name: 'lead',
       type: 'relationship',
       relationTo: 'leads',
-      unique: true,
     },
     {
       name: 'type',

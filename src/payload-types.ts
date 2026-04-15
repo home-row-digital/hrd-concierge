@@ -881,6 +881,7 @@ export interface Transcription {
    * Distinguish real-time data from batch data
    */
   isLive?: boolean | null;
+  turnNumber: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -1528,6 +1529,7 @@ export interface TranscriptionsSelect<T extends boolean = true> {
   textContent?: T;
   timestamp?: T;
   isLive?: T;
+  turnNumber?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -41,5 +41,11 @@ export const Transcriptions: CollectionConfig = {
         description: 'Distinguish real-time data from batch data',
       },
     },
+    {
+      name: 'turnNumber',
+      type: 'number',
+      required: true,
+      defaultValue: 1,
+    },
   ],
 };

@@ -1,18 +1,6 @@
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-dotenv.config({
-  path: path.resolve(__dirname, '../.env'),
-});
-
-import next from 'next/dist/server/next.js';
 import { createServer } from 'node:http';
 import { parse } from 'node:url';
-import { getPayload } from 'payload';
+import next from 'next';
 import { WebSocketServer } from 'ws';
 import { handleRelayConnection } from './services/twilio/relayHandler.js';
 import { getPayloadClient } from './services/payload/getPayloadClient.js';
@@ -23,31 +11,32 @@ const handle = app.getRequestHandler();
 
 app.prepare().then(async () => {
   const payload = await getPayloadClient();
-
   const server = createServer((req, res) => {
     const parsedUrl = parse(req.url!, true);
     handle(req, res, parsedUrl);
   });
 
-  // Initialize wss without a path since we handled it manually
   const wss = new WebSocketServer({ noServer: true });
 
-  // Handle Protocol Upgrade (HTTP -> WS)
   server.on('upgrade', (req, socket, head) => {
     const { pathname } = parse(req.url || '', true);
 
     if (pathname === '/api/voice/stream') {
-      wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
+      wss.handleUpgrade(req, socket, head, (ws) => {
+        // Fix the TypeScript 'setKeepAlive' error by casting to any
+        const s = socket as any;
+        if (typeof s.setNoDelay === 'function') s.setNoDelay(true);
+        if (typeof s.setKeepAlive === 'function') s.setKeepAlive(true, 5000);
+
+        handleRelayConnection(ws, payload);
+      });
+    } else {
+      if (!dev) socket.destroy();
     }
-
-    // Next.js HMR upgrades are handled automatically by the 'handle' function
-    // called in the createServer block, so we don't need an 'else' here.
   });
 
-  wss.on('connection', async (socket) => {
-    handleRelayConnection(socket, payload);
+  const PORT = parseInt(process.env.PORT || '3000', 10);
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Production Server running on port ${PORT}`);
   });
-
-  const PORT = process.env.PORT || 3000;
-  server.listen(PORT, () => console.log(`> Server ready on port ${PORT}`));
 });

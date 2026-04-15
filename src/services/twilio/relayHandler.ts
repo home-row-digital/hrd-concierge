@@ -1,11 +1,10 @@
-import { Payload } from 'payload';
-import { generateAiResponse } from '../ai/gemini';
-
-export async function handleRelayConnection(socket: any, payload: Payload) {
-  let voiceLogId: string;
-  let leadId: string;
-  let personaId: string;
-  let startTime = Date.now();
+export async function handleRelayConnection(socket: any, payload: any) {
+  // session stores data for THIS specific call
+  let session = {
+    voiceLogId: null as string | null,
+    systemPrompt: null as string | null,
+    turn: 1,
+  };
 
   socket.on('message', async (data: Buffer) => {
     try {
@@ -13,71 +12,60 @@ export async function handleRelayConnection(socket: any, payload: Payload) {
 
       switch (msg.type) {
         case 'setup':
-          voiceLogId = msg.customParameters?.voiceLogId;
-          leadId = msg.customParameters?.leadId;
-          personaId = msg.customParameters?.personaId;
-          console.log(`[RELAY] Session Linked: ${voiceLogId}`);
+          // Twilio introduces itself and passes our parameters
+          session.voiceLogId = msg.customParameters?.voiceLogId;
+          session.systemPrompt = msg.customParameters?.systemPrompt;
+          console.log(`Relay Setup for Log ID: ${session.voiceLogId}`);
           break;
 
         case 'prompt':
-          if (!voiceLogId || !personaId) {
-            console.error('[RELAY] Received prompt before setup!');
-            return;
-          }
+          // This is the User's speech turned into text (STT)
+          console.log(`🎤 User said: ${msg.voicePrompt}`);
 
-          // Log Lead Input
-          await payload.create({
-            collection: 'transcriptions',
-            data: {
-              voiceLog: Number(voiceLogId),
-              speaker: 'LEAD',
-              textContent: msg.voicePrompt,
-              timestamp: Date.now() - startTime,
-              isLive: true,
-            },
-          });
+          // GENERATE RESPONSE: This is where you'd call OpenAI/Groq
+          const aiResponse = 'I can hear you! Your voice is being processed by the new relay.';
 
-          // Fetch Persona & Generate Response
-          const persona = await payload.findByID({ collection: 'personas', id: personaId });
-          const aiResponse = await generateAiResponse(
-            msg.voicePrompt,
-            persona.systemPrompt,
-            leadId,
-            typeof persona.brand === 'object'
-              ? persona.brand!.id.toString()
-              : persona.brand!.toString(),
-          );
-
-          // Send back to Twilio
+          // SEND TEXT: Twilio turns this into speech (TTS)
           socket.send(
             JSON.stringify({
               type: 'text',
               token: aiResponse,
-              last_token: true, // Tells Twilio AI is done speaking
+              last: true, // Tells Twilio the AI is finished speaking
             }),
           );
 
-          // Log AI response
-          await payload.create({
-            collection: 'transcriptions',
-            data: {
-              voiceLog: Number(voiceLogId),
-              speaker: 'AI_ASSISTANT',
-              textContent: aiResponse,
-              timestamp: Date.now() - startTime,
-              isLive: true,
-            },
-          });
+          // LOGGING: Save the conversation to the DB in the background
+          if (session.voiceLogId) {
+            payload
+              .create({
+                collection: 'transcriptions',
+                data: {
+                  voiceLog: session.voiceLogId,
+                  speaker: 'AI_ASSISTANT',
+                  textContent: aiResponse,
+                  turnNumber: session.turn++,
+                },
+              })
+              .catch((e: any) => console.error('DB Logging failed:', e));
+          }
           break;
 
         case 'terminate':
-          console.log(`[RELAY] Terminated: ${voiceLogId}`);
+          console.log('Twilio terminated the call session.');
+          socket.close();
+          break;
+
+        case 'interrupt':
+          console.log('User interrupted the AI.');
+          // In a real app, you'd stop your LLM generation here.
           break;
       }
     } catch (err) {
-      console.error('[RELAY ERROR]', err);
+      console.error('RELAY PROCESSING ERROR:', err);
     }
   });
 
-  socket.on('close', () => console.log('Relay Socket Closed'));
+  socket.on('close', (code: number) => {
+    console.log(`[RELAY] Socket Closed. Code: ${code}`);
+  });
 }

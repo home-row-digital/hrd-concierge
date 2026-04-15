@@ -5,73 +5,63 @@ import { NextResponse } from 'next/server';
 const VoiceResponse = twilio.twiml.VoiceResponse;
 
 export async function POST(req: Request) {
-  const formData = await req.formData();
-  const to = formData.get('To') as string;
-  const from = formData.get('From') as string;
-  const callSid = formData.get('CallSid') as string;
-  const accountSid = formData.get('AccountSid') as string;
-
-  const payload = await getPayloadClient();
-  const response = new VoiceResponse();
-
   try {
-    // Find the ProviderConfig using the AccountSid
-    const configQuery = await payload.find({
-      collection: 'provider-configs',
-      where: { twilioSubAccountSid: { equals: accountSid } },
-      limit: 1,
-    });
+    const formData = await req.formData();
+    const to = formData.get('To') as string;
+    const from = formData.get('From') as string;
+    const callSid = formData.get('CallSid') as string;
+    const accountSid = formData.get('AccountSid') as string;
 
-    if (!configQuery.docs.length) {
-      response.reject();
+    const payload = await getPayloadClient();
+
+    // Check if the call already exists
+    const existingCall = await payload.find({
+      collection: 'voice-logs',
+      where: { callSid: { equals: { callSid } } },
+    });
+    if (existingCall.docs.length > 0) {
+      return new NextResponse(null, { status: 200 });
+    }
+
+    // Get brand config and campaign
+    const [configQuery, numberDoc] = await Promise.all([
+      payload.find({
+        collection: 'provider-configs',
+        where: { twilioSubAccountSid: { equals: accountSid } },
+        limit: 1,
+      }),
+      payload.find({
+        collection: 'twilio-numbers',
+        where: { phoneNumber: { equals: to } },
+        limit: 1,
+      }),
+    ]);
+
+    const brand = typeof configQuery.docs[0].brand === 'object' ? configQuery.docs[0].brand : null;
+    const brandId = brand?.id;
+
+    if (!brand || !brandId || brand.emergencyHalt) {
+      const response = new VoiceResponse();
+      response.say('We are currently unavailable. Please try again later.');
+      response.hangup();
       return new NextResponse(response.toString(), { headers: { 'Content-Type': 'text/xml' } });
     }
 
-    const brandId =
-      typeof configQuery.docs[0].brand === 'object'
-        ? configQuery.docs[0].brand.id
-        : configQuery.docs[0].brand;
-
-    // Find the Campaign via the number
-    const numberDoc = await payload.find({
-      collection: 'twilio-numbers',
-      where: { phoneNumber: { equals: to } },
-      limit: 1,
-    });
-
-    const campaignId = numberDoc.docs[0]?.campaign
-      ? typeof numberDoc.docs[0].campaign === 'object'
-        ? numberDoc.docs[0].campaign.id
-        : numberDoc.docs[0].campaign
-      : null;
-
-    // Parallel fetch the Brand and Persona using the Brand ID we got from Config
-    const [brand, persona] = await Promise.all([
-      payload.findByID({ collection: 'brands', id: brandId }),
+    // Fetch Persona and Lead
+    const [personaQuery, leadQuery] = await Promise.all([
       payload.find({
         collection: 'personas',
         where: { brand: { equals: brandId } },
         limit: 1,
       }),
+      payload.find({
+        collection: 'leads',
+        where: { and: [{ brand: { equals: brandId } }, { phoneNumber: { equals: from } }] },
+        limit: 1,
+      }),
     ]);
 
-    // Emergency halt & health checks
-    if (brand.emergencyHalt || brand.healthStatus === 'Warning') {
-      response.say('We are currently experiencing technical difficulties. Please try again later.');
-      response.hangup();
-      return new NextResponse(response.toString(), { headers: { 'Content-Type': 'text/xml' } });
-    }
-
-    // Lead Auto-Identification / Creation
-    const leadQuery = await payload.find({
-      collection: 'leads',
-      where: {
-        and: [{ brand: { equals: brandId } }, { phoneNumber: { equals: from } }],
-      },
-      limit: 1,
-    });
-
-    let leadId = leadQuery.docs[0]?.id;
+    let leadId = typeof leadQuery.docs[0] === 'object' ? leadQuery.docs[0].id : null;
     if (!leadId) {
       const newLead = await payload.create({
         collection: 'leads',
@@ -85,48 +75,38 @@ export async function POST(req: Request) {
       leadId = newLead.id;
     }
 
-    // Create Activity Ledger entries
     const voiceLog = await payload.create({
       collection: 'voice-logs',
       data: {
         callSid,
-        campaign: campaignId,
         callType: 'AI_ASSISTANT',
-        status: 'RINGING',
+        status: 'IN_PROGRESS',
         direction: 'INBOUND',
         from,
         to,
       },
     });
 
-    await payload.create({
-      collection: 'lead-activity',
-      data: {
-        lead: leadId,
-        type: 'CALL',
-        description: `Incoming AI voice call started.`,
-        referenceId: callSid,
-      },
-    });
+    const response = new VoiceResponse();
+    const host = req.headers.get('host');
+    const protocol = host?.includes('localhost') ? 'ws' : 'wss';
+    const wsUrl = `${protocol}://${host}/api/voice/stream`;
 
-    // CONNECT THE STREAM
-    const relay = response.connect().conversationRelay({
-      url: `wss://${req.headers.get('host')}/api/voice/stream`,
+    const connect = await response.connect();
+    const relay = connect.conversationRelay({
+      url: wsUrl,
+      welcomeGreeting: 'Hello!',
     });
 
     // Pass parameters to the Stream
-    relay.parameter({ name: 'personaId', value: persona.docs[0]?.id.toString() });
-    relay.parameter({ name: 'brandId', value: brandId.toString() });
-    relay.parameter({ name: 'leadId', value: leadId.toString() });
-    relay.parameter({ name: 'voiceLogId', value: voiceLog.id.toString() });
+    relay.parameter({ name: 'personaId', value: String(personaQuery.docs[0]?.id) });
+    relay.parameter({ name: 'voiceLogId', value: String(voiceLog.id) });
 
-    return new NextResponse(response.toString(), {
-      headers: { 'Content-Type': 'text/xml' },
-    });
+    return new NextResponse(response.toString(), { headers: { 'Content-Type': 'text/xml' } });
   } catch (error) {
     console.error('CRITICAL VOICE ERROR:', error);
-    const errorResponse = new VoiceResponse();
-    errorResponse.say('System Error.');
-    return new NextResponse(errorResponse.toString(), { headers: { 'Content-Type': 'text/xml' } });
+    return new NextResponse('<Response><Hangup/></Response>', {
+      headers: { 'Content-Type': 'text/xml' },
+    });
   }
 }
