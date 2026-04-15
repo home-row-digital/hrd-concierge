@@ -6,7 +6,6 @@ ENV NEXT_TELEMETRY_DISABLED 1
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
-# We use 'install' instead of 'ci' to ensure tsx is available
 RUN npm install
 
 # 3. Builder
@@ -21,16 +20,18 @@ FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV production
 
-# We copy the WHOLE src folder because tsx needs to read the .ts files at runtime
+# Copy necessary files only
 COPY --from=builder /app/src ./src
-COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
-# No dist folder needed anymore!
+
+# CRITICAL: This creates an empty public folder if yours is missing 
+# so the Next.js server doesn't complain, without failing the build.
+RUN mkdir -p ./public
 
 EXPOSE 3000
 ENV PORT 3000
 
-# Run using npx tsx so it can read your server.ts directly
+# Run using npx tsx to handle the server.ts
 CMD ["npx", "tsx", "src/server.ts"]
